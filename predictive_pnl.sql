@@ -74,6 +74,9 @@ WITH PRD_RPT_LEVEL_RL0029 AS (
     entity
     ,description as entity_desc
   FROM `prd-amer-analyt-actuals-svc-0a.amer_p_la_fin_data_hub.v_fit_entity_hier_amer` 
+  WHERE entity != "ARUFS" 
+    AND ENTITY NOT LIKE '%ELIM%'
+    AND ENTITY NOT LIKE '%_CAP%'
 )
 
 ,ACCOUNT_H_SIGN AS (
@@ -217,7 +220,7 @@ WITH PRD_RPT_LEVEL_RL0029 AS (
           SUM(OIE) AS PL223099,
           SUM(Operating_Income) AS PL229099
       FROM FIT_PC_NR_GP_OI_TABLE
-      WHERE entity IN ("BRLFS", "BRALLOC")
+      WHERE entity IN (SELECT ENTITY FROM PRD_ENTITY_HIERARCHY) --("BRLFS", "BRALLOC")
           AND scenario = "Act"
           AND currency = "LCL"
       GROUP BY date, entity, bsp_code
