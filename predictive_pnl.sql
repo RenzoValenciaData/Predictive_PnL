@@ -74,8 +74,7 @@ WITH PRD_RPT_LEVEL_RL0029 AS (
     entity
     ,description as entity_desc
   FROM `prd-amer-analyt-actuals-svc-0a.amer_p_la_fin_data_hub.v_fit_entity_hier_amer` 
-  WHERE entity != "ARUFS" 
-    AND ENTITY NOT LIKE '%ELIM%'
+  WHERE ENTITY NOT LIKE '%ELIM%'
     AND ENTITY NOT LIKE '%_CAP%'
 )
 
@@ -84,6 +83,14 @@ WITH PRD_RPT_LEVEL_RL0029 AS (
     account_code
     ,aggregation_state as aggregation_account
   FROM `dev-amer-analyt-actuals-svc-7a.amer_p_la_fin_data_hub.account_h` 
+)
+
+,PRD_FIT_ENTITY_TO_SAC_ENTITY AS (
+  SELECT 
+    FIT_ENTITY
+    ,sac_entity
+    ,sac_entity_desc 
+  FROM `prd-amer-analyt-actuals-svc-0a.amer_p_la_fin_data_hub.v_fdl_fit_sac_country_mapping_amer`
 )
 
 ,FIT_PCL_PC_DATA AS (
@@ -234,8 +241,16 @@ WITH PRD_RPT_LEVEL_RL0029 AS (
 
 SELECT
   pc.date
-  ,pc.entity as entity_code
-  ,ent.entity_desc
+  -- ,pc.entity as entity_code
+  -- ,ent.entity_desc
+  ,CASE pc.entity
+    WHEN "MEXALLOC" THEN "MXALLOC"
+    ELSE IFNULL(entF2S.sac_entity, PC.entity)
+  END AS  entity_code
+  ,CASE pc.entity 
+    WHEN "MEXALLOC" THEN "Mexico HQ Allocations"
+    ELSE IFNULL(entF2S.sac_entity_desc, ent.entity_desc)
+  END AS  entity_desc
   ,pc.bsp_code
   ,prd.bsp_desc 
   ,pc.account as account_code
@@ -253,7 +268,8 @@ LEFT JOIN (
 ) prd ON pc.bsp_code = prd.bsp_code
 LEFT JOIN PRD_ACCOUNT_HIERARCHY acc ON pc.account = acc.account_code
 LEFT JOIN PRD_ENTITY_HIERARCHY ent ON pc.entity = ent.entity
+LEFT JOIN PRD_FIT_ENTITY_TO_SAC_ENTITY entF2S ON pc.entity = entF2S.fit_entity
+WHERE pc.entity NOT IN ("ARLFS", "KICFSLAH", "LATOPUSD", "MBSCRLFS")
 GROUP BY 1,2,3,4,5,6,7
 
 )
-
