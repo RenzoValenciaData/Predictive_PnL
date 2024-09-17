@@ -260,7 +260,12 @@ SELECT
     WHEN "Segment Operating Income" THEN "OI"
     ELSE acc.account_desc
   END AS account_desc
-  ,SUM(Value) as value_act
+  ,SUM(
+    CASE 
+      WHEN pc.account IN ("PL214099","PL216099","PL223099") THEN -1 * Value
+      ELSE Value
+    END
+  ) as value_act
 FROM FIT_PC_FINAL_TABLE pc
 LEFT JOIN (
   SELECT DISTINCT bsp_code, bsp_desc
